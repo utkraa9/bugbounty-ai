@@ -66,51 +66,139 @@ def parse_json_response(text: str) -> dict:
 
 def analyze_recon(recon_data: dict) -> dict:
     """
-    Analyze authorized reconnaissance evidence.
+    V2.1 AI analysis for authorized security research.
 
-    This function does not directly interact with the target.
+    The model is explicitly instructed to separate:
+    observations, security signals, potential issues,
+    confidence, false-positive considerations, and
+    safe manual verification.
+
+    It does not directly interact with the target.
     """
 
     prompt = f"""
-You are a security research assistant working inside an
-authorized bug-bounty workflow.
+You are an AI security research assistant operating inside
+an authorized bug-bounty workflow.
 
-Analyze the following reconnaissance evidence:
+Analyze ONLY the reconnaissance evidence supplied below.
 
+RECONNAISSANCE EVIDENCE:
 {json.dumps(recon_data, indent=2)}
 
-Return ONLY valid JSON:
+Your job is to help a human researcher prioritize what deserves
+manual verification. Do not treat configuration observations as
+confirmed vulnerabilities.
+
+Return ONLY valid JSON with this exact structure:
 
 {{
-  "summary": "Short summary of observations",
-  "interesting_signals": [
-    "Observation"
+  "summary": "Short evidence-based summary",
+  "observations": [
+    {{
+      "observation": "Directly observed fact",
+      "evidence": "Specific evidence supporting the observation"
+    }}
+  ],
+  "security_signals": [
+    {{
+      "signal": "Security-relevant signal",
+      "reasoning": "Why the signal may matter",
+      "confidence": 0.0
+    }}
   ],
   "potential_findings": [
     {{
-      "title": "Potential issue",
+      "title": "Potential security issue",
+      "category": "security category",
       "severity": "info|low|medium|high|critical",
       "confidence": 0.0,
-      "reasoning": "Evidence-based reasoning",
-      "recommended_manual_check": "Safe authorized check"
+      "evidence": [
+        "Only evidence actually present in the reconnaissance data"
+      ],
+      "reasoning": "Evidence-based explanation",
+      "false_positive_risk": "low|medium|high",
+      "recommended_manual_check": "Safe, authorized verification step"
     }}
   ],
   "false_positive_considerations": [
-    "Possible benign explanation"
+    "Possible benign explanation or missing evidence"
+  ],
+  "priority": "low|medium|high",
+  "analyst_notes": [
+    "Important limitation, missing evidence, or context"
   ]
 }}
 
-Rules:
-- Do not claim a vulnerability is confirmed from metadata alone.
-- Separate observations from confirmed vulnerabilities.
-- Be evidence-driven.
-- Do not perform unauthorized access.
-- Recommendations must remain within authorized scope.
+STRICT RULES:
+
+1. Evidence first.
+   Never invent endpoints, parameters, credentials, payloads,
+   responses, technologies, vulnerabilities, or attack results.
+
+2. Observation is not vulnerability.
+   A missing header, exposed technology version, open port,
+   informational response, or configuration recommendation
+   must not automatically be presented as an exploitable
+   vulnerability.
+
+3. Do not claim exploitation.
+   Reconnaissance metadata alone cannot prove exploitability.
+
+4. Severity must reflect demonstrated impact.
+   When impact is unclear, prefer "info" or "low".
+
+5. Confidence must represent confidence in the assessment,
+   not confidence that exploitation is possible.
+
+6. Every potential finding must contain evidence that exists
+   in the supplied reconnaissance data.
+
+7. If evidence is insufficient, explicitly say so and put the
+   item into false_positive_considerations or analyst_notes.
+
+8. Manual checks must remain within the authorized scope and
+   must be safe verification steps. Do not suggest destructive
+   actions, credential attacks, denial-of-service activity,
+   persistence, or unauthorized access.
+
+9. Avoid duplicate findings.
+   Combine multiple observations when they represent the same
+   underlying issue.
+
+10. Distinguish hardening recommendations from vulnerabilities.
+    Defense-in-depth improvements should normally be "info"
+    unless the supplied evidence demonstrates meaningful
+    security impact.
+
+11. Do not use knowledge of a specific target from outside the
+    supplied evidence to manufacture a finding.
+
+12. If there are no credible potential findings, return an empty
+    potential_findings array and explain why in analyst_notes.
+
+Return JSON only. No Markdown. No commentary outside the JSON.
 """
 
     response = call_gemini(prompt)
 
-    return parse_json_response(response)
+    result = parse_json_response(response)
+
+    # Keep a predictable shape for the frontend/API even when
+    # Gemini returns incomplete JSON.
+    if not isinstance(result, dict):
+        return {
+            "error": "Gemini returned an unexpected response format"
+        }
+
+    result.setdefault("summary", "")
+    result.setdefault("observations", [])
+    result.setdefault("security_signals", [])
+    result.setdefault("potential_findings", [])
+    result.setdefault("false_positive_considerations", [])
+    result.setdefault("priority", "low")
+    result.setdefault("analyst_notes", [])
+
+    return result
 
 
 def generate_bug_bounty_report(finding: dict) -> dict:
@@ -120,28 +208,25 @@ def generate_bug_bounty_report(finding: dict) -> dict:
     """
 
     prompt = f"""
-You are preparing a professional bug-bounty report.
+You are preparing a professional bug-bounty report from a
+human-confirmed finding.
 
-The following finding has already been reviewed and confirmed
-by the researcher:
+Use ONLY the information contained in this finding:
 
 {json.dumps(finding, indent=2)}
 
-Create a concise, professional report.
-
-Return ONLY valid JSON using this structure:
+Return ONLY valid JSON using this exact structure:
 
 {{
-  "title": "Clear vulnerability title",
+  "title": "Clear vulnerability or security issue title",
   "severity": "info|low|medium|high|critical",
   "summary": "Short executive summary",
   "affected_asset": "Affected asset",
-  "technical_description": "Detailed technical explanation",
+  "technical_description": "Evidence-based technical explanation",
   "impact": "Realistic security impact",
-  "evidence": "Relevant evidence from the finding",
+  "evidence": "Relevant evidence actually present in the finding",
   "reproduction_steps": [
-    "Step 1",
-    "Step 2"
+    "Only steps supported by the supplied finding"
   ],
   "remediation": "Recommended remediation",
   "limitations": [
@@ -150,13 +235,19 @@ Return ONLY valid JSON using this structure:
 }}
 
 Rules:
+
 - Do not invent evidence.
-- Do not invent reproduction steps that are not supported
-  by the supplied finding.
+- Do not invent request/response data.
+- Do not invent endpoints, parameters, payloads, credentials,
+  exploitation results, or reproduction details.
 - Do not exaggerate severity or impact.
-- If information is missing, clearly say so.
-- Keep the report suitable for responsible bug-bounty
-  disclosure.
+- If reproduction information is missing, explicitly state that.
+- Preserve the distinction between hardening/configuration gaps
+  and directly exploitable vulnerabilities.
+- Keep the report suitable for responsible bug-bounty disclosure.
+- Use the finding's actual affected asset and severity where
+  supported.
+- Return JSON only. No Markdown. No commentary outside the JSON.
 """
 
     response = call_gemini(prompt)
