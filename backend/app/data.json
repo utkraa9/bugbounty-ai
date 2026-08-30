@@ -1,0 +1,66 @@
+{
+  "programs": {
+    "bf183db4-4aab-4ef4-9545-47f88cc5c025": {
+      "id": "bf183db4-4aab-4ef4-9545-47f88cc5c025",
+      "name": "Test Program 2",
+      "platform": "test",
+      "description": "Persistence test"
+    }
+  },
+  "scopes": {
+    "bf183db4-4aab-4ef4-9545-47f88cc5c025": [
+      {
+        "asset": "example.com",
+        "asset_type": "domain",
+        "notes": "Authorized testing asset"
+      },
+      {
+        "asset": "*.example.com",
+        "asset_type": "domain",
+        "notes": "Authorized subdomains"
+      },
+      {
+        "asset": "!admin.example.com",
+        "asset_type": "domain",
+        "notes": "Explicitly excluded from testing"
+      }
+    ]
+  },
+  "findings": {
+    "d70b92d6-8a2a-419e-9651-1ed83269b546": {
+      "id": "d70b92d6-8a2a-419e-9651-1ed83269b546",
+      "program_id": "bf183db4-4aab-4ef4-9545-47f88cc5c025",
+      "asset": "example.com",
+      "title": "Test Finding",
+      "severity": "low",
+      "description": "Testing the finding storage system",
+      "evidence": "Local test evidence"
+    },
+    "c3c822c9-2f91-4d79-8f29-e9de8fb884bc": {
+      "id": "c3c822c9-2f91-4d79-8f29-e9de8fb884bc",
+      "program_id": "bf183db4-4aab-4ef4-9545-47f88cc5c025",
+      "candidate_id": "85631092-9cbb-4d1f-956c-7947056c6642",
+      "asset": "example.com",
+      "title": "Test Candidate",
+      "severity": "low",
+      "description": "Testing the candidate review workflow",
+      "evidence": "Generated during local testing",
+      "status": "confirmed",
+      "created_at": "2026-08-29T22:32:02.573234+00:00"
+    }
+  },
+  "candidates": {
+    "85631092-9cbb-4d1f-956c-7947056c6642": {
+      "id": "85631092-9cbb-4d1f-956c-7947056c6642",
+      "program_id": "bf183db4-4aab-4ef4-9545-47f88cc5c025",
+      "asset": "example.com",
+      "title": "Test Candidate",
+      "severity": "low",
+      "description": "Testing the candidate review workflow",
+      "evidence": "Generated during local testing",
+      "status": "confirmed",
+      "reviewer_note": "Confirmed for testing the review workflow.",
+      "reviewed_at": "2026-08-29T22:31:10.984584+00:00"
+    }
+  }
+}

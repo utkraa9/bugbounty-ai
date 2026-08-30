@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BugBounty AI</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0b1120;
+            --panel: #111827;
+            --panel2: #172033;
+            --border: #263449;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --blue: #2563eb;
+            --blue2: #1d4ed8;
+            --green: #22c55e;
+            --red: #ef4444;
+            --yellow: #eab308;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 230px;
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            background: #0d1526;
+            border-right: 1px solid var(--border);
+            padding: 24px 14px;
+        }
+
+        .brand {
+            padding: 0 12px 28px;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .brand p {
+            margin: 7px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .nav button {
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            color: #cbd5e1;
+            border: 0;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .nav button:hover,
+        .nav button.active {
+            background: #1e293b;
+            color: white;
+        }
+
+        .main {
+            margin-left: 230px;
+            width: calc(100% - 230px);
+        }
+
+        .topbar {
+            height: 70px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(17, 24, 39, .95);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .topbar-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .connection {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #86efac;
+            font-size: 13px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+
+        .content {
+            max-width: 1400px;
+            margin: auto;
+            padding: 30px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-header h2 {
+            margin: 0;
+            font-size: 27px;
+        }
+
+        .page-header p {
+            margin: 7px 0 0;
+            color: var(--muted);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .stat-value {
+            font-size: 30px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            margin: 0 0 16px;
+            font-size: 18px;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+            margin: 12px 0 7px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            background: #0b1220;
+            color: white;
+            border: 1px solid #334155;
+            border-radius: 7px;
+            padding: 11px 12px;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #3b82f6;
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 7px;
+            padding: 10px 15px;
+            background: var(--blue);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 14px;
+        }
+
+        .btn:hover {
+            background: var(--blue2);
+        }
+
+        .btn.secondary {
+            background: #475569;
+        }
+
+        .btn.success {
+            background: #15803d;
+        }
+
+        .btn.danger {
+            background: #b91c1c;
+        }
+
+        .btn.small {
+            padding: 8px 11px;
+            font-size: 12px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 7px;
+            border-radius: 5px;
+            background: #334155;
+            color: #e2e8f0;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+
+        .badge.green {
+            background: #14532d;
+            color: #bbf7d0;
+        }
+
+        .badge.red {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+
+        .badge.yellow {
+            background: #713f12;
+            color: #fef08a;
+        }
+
+        .item {
+            border: 1px solid #334155;
+            background: #0c1424;
+            border-radius: 9px;
+            padding: 14px;
+            margin-top: 10px;
+        }
+
+        .item-title {
+            font-weight: bold;
+            margin-bottom: 7px;
+        }
+
+        .item-meta {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .empty {
+            color: var(--muted);
+            padding: 15px 0;
+        }
+
+        .analysis-summary {
+            line-height: 1.6;
+            color: #cbd5e1;
+            background: #0b1220;
+            border: 1px solid #263449;
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .analysis-finding {
+            border: 1px solid #334155;
+            border-radius: 9px;
+            padding: 15px;
+            margin-top: 12px;
+            background: #0b1220;
+        }
+
+        .analysis-finding h4 {
+            margin: 0 0 8px;
+        }
+
+        .reasoning {
+            color: #cbd5e1;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .manual-check {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        pre {
+            background: #020617;
+            color: #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .status {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+            max-width: 400px;
+            padding: 13px 16px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,.35);
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            border-color: #166534;
+            color: #86efac;
+        }
+
+        .status.error {
+            border-color: #991b1b;
+            color: #fca5a5;
+        }
+
+        .workflow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 5px 0 15px;
+        }
+
+        .step {
+            white-space: nowrap;
+            background: #172033;
+            border: 1px solid #334155;
+            padding: 9px 12px;
+            border-radius: 7px;
+            font-size: 12px;
+        }
+
+        .arrow {
+            color: #64748b;
+        }
+
+        .run-box {
+            border: 1px solid #334155;
+            background: #0b1220;
+            border-radius: 9px;
+            padding: 18px;
+        }
+
+        .run-status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 7px;
+            background: #172033;
+            color: var(--muted);
+            display: none;
+        }
+
+        .run-status.show {
+            display: block;
+        }
+
+        @media (max-width: 1000px) {
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full {
+                grid-column: auto;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .sidebar {
+                width: 70px;
+                padding: 15px 8px;
+            }
+
+            .brand h1 {
+                font-size: 0;
+            }
+
+            .brand h1::after {
+                content: "B";
+                font-size: 22px;
+            }
+
+            .brand p {
+                display: none;
+            }
+
+            .nav button {
+                font-size: 0;
+                text-align: center;
+            }
+
+            .main {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+
+            .content {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <h1>BugBounty AI</h1>
+            <p>Authorized security research</p>
+        </div>
+
+        <nav class="nav">
+
+            <button class="active"
+                    onclick="showSection('dashboard', this)">
+                Dashboard
+            </button>
+
+            <button onclick="showSection('programs', this)">
+                Programs
+            </button>
+
+            <button onclick="showSection('recon', this)">
+                Recon
+            </button>
+
+            <button onclick="showSection('findings', this)">
+                Findings
+            </button>
+
+            <button onclick="showSection('reports', this)">
+                Reports
+            </button>
+
+        </nav>
+
+    </aside>
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div class="topbar-title">
+                Security Research Dashboard
+            </div>
+
+            <div class="connection">
+                <span class="dot"></span>
+                <span id="connectionText">
+                    Connecting...
+                </span>
+            </div>
+
+        </header>
+
+        <div class="content">
+
+            <!-- DASHBOARD -->
+
+            <section id="dashboard"
+                     class="section active">
+
+                <div class="page-header">
+
+                    <h2>Dashboard</h2>
+
+                    <p>
+                        Authorized reconnaissance, AI analysis,
+                        review and reporting.
+                    </p>
+
+                </div>
+
+                <div class="stats">
+
+                    <div class="stat">
+                        <div class="stat-label">
+                            Programs
+                        </div>
+
+                        <div class="stat-value"
+                             id="statPrograms">
+                            —
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-label">
+                            Scope Assets
+                        </div>
+
+                        <div class="stat-value"
+                             id="statScope">
+                            —
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-label">
+                            Candidates
+                        </div>
+
+                        <div class="stat-value"
+                             id="statCandidates">
+                            —
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-label">
+                            Findings
+                        </div>
+
+                        <div class="stat-value"
+                             id="statFindings">
+                            —
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>Research Workflow</h3>
+
+                    <div class="workflow">
+
+                        <div class="step">
+                            Authorized Scope
+                        </div>
+
+                        <div class="arrow">→</div>
+
+                        <div class="step">
+                            Recon
+                        </div>
+
+                        <div class="arrow">→</div>
+
+                        <div class="step">
+                            Gemini Analysis
+                        </div>
+
+                        <div class="arrow">→</div>
+
+                        <div class="step">
+                            Candidate
+                        </div>
+
+                        <div class="arrow">→</div>
+
+                        <div class="step">
+                            Human Review
+                        </div>
+
+                        <div class="arrow">→</div>
+
+                        <div class="step">
+                            Finding
+                        </div>
+
+                        <div class="arrow">→</div>
+
+                        <div class="step">
+                            Report
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="grid">
+
+                    <div class="card">
+
+                        <h3>Active Program</h3>
+
+                        <select id="dashboardProgram">
+                            <option value="">
+                                Loading...
+                            </option>
+                        </select>
+
+                        <button class="btn"
+                                onclick="openSelectedProgram()">
+                            Open Program
+                        </button>
+
+                    </div>
+
+                    <div class="card">
+
+                        <h3>Quick Research</h3>
+
+                        <input id="quickAsset"
+                               placeholder="example.com">
+
+                        <button class="btn"
+                                onclick="quickResearch()">
+                            Start Research Run
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- PROGRAMS -->
+
+            <section id="programs"
+                     class="section">
+
+                <div class="page-header">
+
+                    <h2>Programs</h2>
+
+                    <p>
+                        Manage authorized bounty programs.
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>Program Selection</h3>
+
+                    <select id="programSelect">
+                        <option value="">
+                            Loading programs...
+                        </option>
+                    </select>
+
+                    <button class="btn"
+                            onclick="loadProgramData()">
+                        Load Program
+                    </button>
+
+                </div>
+
+                <div class="grid">
+
+                    <div class="card">
+
+                        <h3>Program Details</h3>
+
+                        <div id="programDetails">
+                            Select a program.
+                        </div>
+
+                    </div>
+
+                    <div class="card">
+
+                        <h3>Authorized Scope</h3>
+
+                        <div id="scope">
+                            Select a program.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- RECON -->
+
+            <section id="recon"
+                     class="section">
+
+                <div class="page-header">
+
+                    <h2>Recon & AI Analysis</h2>
+
+                    <p>
+                        Run authorized reconnaissance and analyze
+                        the collected evidence.
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>Research Run</h3>
+
+                    <div class="run-box">
+
+                        <label>
+                            Program
+                        </label>
+
+                        <select id="reconProgram">
+                            <option value="">
+                                Select program
+                            </option>
+                        </select>
+
+                        <label>
+                            Authorized Asset
+                        </label>
+
+                        <input id="reconAsset"
+                               placeholder="example.com">
+
+                        <button class="btn"
+                                onclick="runResearchRun()">
+                            Start Research Run
+                        </button>
+
+                        <button class="btn secondary"
+                                onclick="runRecon()">
+                            Recon Only
+                        </button>
+
+                        <div id="researchStatus"
+                             class="run-status">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="grid">
+
+                    <div class="card">
+
+                        <h3>Recon Result</h3>
+
+                        <pre id="reconResult">No recon run yet.</pre>
+
+                    </div>
+
+                    <div class="card">
+
+                        <h3>Gemini Analysis</h3>
+
+                        <button class="btn"
+                                onclick="runAnalysis()">
+                            Analyze with Gemini
+                        </button>
+
+                        <div id="analysisResult">
+
+                            <div class="empty">
+                                Run recon and analyze the result.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- FINDINGS -->
+
+            <section id="findings"
+                     class="section">
+
+                <div class="page-header">
+
+                    <h2>Findings</h2>
+
+                    <p>
+                        Review candidates and confirmed findings.
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>Candidate Findings</h3>
+
+                    <button class="btn secondary"
+                            onclick="loadCandidates()">
+                        Refresh Candidates
+                    </button>
+
+                    <div id="candidates">
+                        Select a program first.
+                    </div>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>Confirmed Findings</h3>
+
+                    <button class="btn secondary"
+                            onclick="loadFindings()">
+                        Refresh Findings
+                    </button>
+
+                    <div id="confirmedFindings">
+                        Select a program first.
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- REPORTS -->
+
+            <section id="reports"
+                     class="section">
+
+                <div class="page-header">
+
+                    <h2>Reports</h2>
+
+                    <p>
+                        Generate structured reports from
+                        confirmed findings.
+                    </p>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>Generate Report</h3>
+
+                    <label>
+                        Finding ID
+                    </label>
+
+                    <input id="findingId"
+                           placeholder="Confirmed finding ID">
+
+                    <button class="btn"
+                            onclick="generateReport()">
+                        Generate Report
+                    </button>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>Report</h3>
+
+                    <pre id="reportResult">No report generated yet.</pre>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+<div id="status"
+     class="status">
+</div>
+
+<script>
+
+const API = "http://127.0.0.1:8000";
+
+let programs = [];
+let currentProgram = null;
+let latestAnalysis = null;
+
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function escapeHtml(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function showStatus(message, type = "") {
+
+    const element =
+        document.getElementById("status");
+
+    element.textContent = message;
+
+    element.className =
+        "status show " + type;
+
+    setTimeout(() => {
+        element.className = "status";
+    }, 4500);
+}
+
+
+function setResearchStatus(message) {
+
+    const element =
+        document.getElementById("researchStatus");
+
+    element.textContent = message;
+
+    element.classList.add("show");
+}
+
+
+async function api(path, options = {}) {
+
+    const response =
+        await fetch(API + path, options);
+
+    let data = {};
+
+    try {
+        data = await response.json();
+    } catch {
+        data = {};
+    }
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.detail ||
+            "Request failed"
+        );
+    }
+
+    return data;
+}
+
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+function showSection(id, button) {
+
+    document
+        .querySelectorAll(".section")
+        .forEach(section => {
+            section.classList.remove("active");
+        });
+
+    const section =
+        document.getElementById(id);
+
+    if (section) {
+        section.classList.add("active");
+    }
+
+    document
+        .querySelectorAll(".nav button")
+        .forEach(btn => {
+            btn.classList.remove("active");
+        });
+
+    if (button) {
+        button.classList.add("active");
+    }
+
+    if (id === "findings") {
+        loadCandidates();
+        loadFindings();
+    }
+
+    if (id === "programs") {
+        loadProgramData();
+    }
+}
+
+
+// ============================================================
+// BACKEND
+// ============================================================
+
+async function checkBackend() {
+
+    try {
+
+        await api("/health");
+
+        document
+            .getElementById("connectionText")
+            .textContent =
+            "Backend connected • SQLite connected";
+
+        await loadPrograms();
+
+    } catch (error) {
+
+        document
+            .getElementById("connectionText")
+            .textContent =
+            "Backend connection failed";
+
+        showStatus(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+// ============================================================
+// PROGRAMS
+// ============================================================
+
+async function loadPrograms() {
+
+    try {
+
+        const data =
+            await api("/programs");
+
+        programs =
+            Array.isArray(data)
+                ? data
+                : data.programs || [];
+
+        document
+            .getElementById("statPrograms")
+            .textContent =
+            programs.length;
+
+        populateProgramSelect("programSelect");
+        populateProgramSelect("reconProgram");
+        populateProgramSelect("dashboardProgram");
+
+        if (programs.length > 0) {
+
+            currentProgram =
+                programs[0].id;
+
+            setProgramSelections(
+                currentProgram
+            );
+
+            await loadProgramData();
+
+        } else {
+
+            document
+                .getElementById("statScope")
+                .textContent = "0";
+
+            document
+                .getElementById("statCandidates")
+                .textContent = "0";
+
+            document
+                .getElementById("statFindings")
+                .textContent = "0";
+        }
+
+    } catch (error) {
+
+        showStatus(
+            "Could not load programs: " +
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+function populateProgramSelect(elementId) {
+
+    const select =
+        document.getElementById(elementId);
+
+    if (!select) {
+        return;
+    }
+
+    select.innerHTML =
+        `<option value="">
+            Select program
+        </option>`;
+
+    programs.forEach(program => {
+
+        const option =
+            document.createElement("option");
+
+        option.value =
+            program.id;
+
+        option.textContent =
+            `${program.name || "Program"}${
+                program.platform
+                    ? " (" + program.platform + ")"
+                    : ""
+            }`;
+
+        select.appendChild(option);
+    });
+}
+
+
+function setProgramSelections(value) {
+
+    if (!value) {
+        return;
+    }
+
+    currentProgram = value;
+
+    [
+        "programSelect",
+        "reconProgram",
+        "dashboardProgram"
+    ].forEach(id => {
+
+        const element =
+            document.getElementById(id);
+
+        if (element) {
+            element.value = value;
+        }
+    });
+}
+
+
+document
+    .getElementById("programSelect")
+    .addEventListener(
+        "change",
+        function () {
+
+            setProgramSelections(this.value);
+
+            loadProgramData();
+        }
+    );
+
+
+document
+    .getElementById("reconProgram")
+    .addEventListener(
+        "change",
+        function () {
+
+            setProgramSelections(this.value);
+        }
+    );
+
+
+document
+    .getElementById("dashboardProgram")
+    .addEventListener(
+        "change",
+        function () {
+
+            setProgramSelections(this.value);
+        }
+    );
+
+
+// ============================================================
+// PROGRAM DATA / SCOPE
+// ============================================================
+
+async function loadProgramData() {
+
+    if (!currentProgram) {
+        return;
+    }
+
+    const program =
+        programs.find(
+            item => item.id === currentProgram
+        );
+
+    const details =
+        document.getElementById(
+            "programDetails"
+        );
+
+    if (program) {
+
+        details.innerHTML = `
+            <div class="item">
+
+                <div class="item-title">
+                    ${escapeHtml(
+                        program.name || "Program"
+                    )}
+                </div>
+
+                <div class="item-meta">
+
+                    Platform:
+                    ${escapeHtml(
+                        program.platform || "—"
+                    )}
+
+                    <br>
+
+                    ID:
+                    ${escapeHtml(
+                        program.id
+                    )}
+
+                </div>
+
+            </div>
+        `;
+    }
+
+    try {
+
+        const data =
+            await api(
+                `/programs/${currentProgram}/scope`
+            );
+
+        const scope =
+            data.scope || [];
+
+        document
+            .getElementById("statScope")
+            .textContent =
+            scope.length;
+
+        renderScope(scope);
+
+        await loadCandidates();
+        await loadFindings();
+
+    } catch (error) {
+
+        showStatus(
+            "Could not load scope: " +
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+function renderScope(scope) {
+
+    const element =
+        document.getElementById("scope");
+
+    element.innerHTML = "";
+
+    if (!scope.length) {
+
+        element.innerHTML =
+            `<div class="empty">
+                No scope configured.
+            </div>`;
+
+        return;
+    }
+
+    scope.forEach(item => {
+
+        const div =
+            document.createElement("div");
+
+        div.className = "item";
+
+        const excluded =
+            String(item.asset || "")
+                .startsWith("!");
+
+        div.innerHTML = `
+
+            <div class="item-title">
+
+                ${escapeHtml(
+                    item.asset
+                )}
+
+                <span class="badge ${
+                    excluded
+                        ? "red"
+                        : "green"
+                }">
+
+                    ${
+                        excluded
+                            ? "Excluded"
+                            : "Authorized"
+                    }
+
+                </span>
+
+            </div>
+
+            <div class="item-meta">
+
+                Type:
+                ${escapeHtml(
+                    item.asset_type || "—"
+                )}
+
+                <br>
+
+                ${escapeHtml(
+                    item.notes || ""
+                )}
+
+            </div>
+        `;
+
+        element.appendChild(div);
+    });
+}
+
+
+// ============================================================
+// QUICK RESEARCH
+// ============================================================
+
+async function quickResearch() {
+
+    const asset =
+        document
+            .getElementById("quickAsset")
+            .value
+            .trim();
+
+    if (!currentProgram) {
+
+        showStatus(
+            "Select a program first.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!asset) {
+
+        showStatus(
+            "Enter an authorized asset.",
+            "error"
+        );
+
+        return;
+    }
+
+    document
+        .getElementById("reconAsset")
+        .value =
+        asset;
+
+    showSection(
+        "recon",
+        document.querySelectorAll(
+            ".nav button"
+        )[2]
+    );
+
+    await runResearchRun();
+}
+
+
+// ============================================================
+// ONE-CLICK RESEARCH RUN
+// ============================================================
+
+async function runResearchRun() {
+
+    const programId =
+        document
+            .getElementById("reconProgram")
+            .value;
+
+    const asset =
+        document
+            .getElementById("reconAsset")
+            .value
+            .trim();
+
+    if (!programId) {
+
+        showStatus(
+            "Select a program.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!asset) {
+
+        showStatus(
+            "Enter an authorized asset.",
+            "error"
+        );
+
+        return;
+    }
+
+    setProgramSelections(
+        programId
+    );
+
+    try {
+
+        setResearchStatus(
+            "1/2 Running authorized reconnaissance..."
+        );
+
+        showStatus(
+            "Research run started..."
+        );
+
+        const reconData =
+            await api(
+                `/recon/${programId}?asset=${encodeURIComponent(asset)}`
+            );
+
+        document
+            .getElementById("reconResult")
+            .textContent =
+            JSON.stringify(
+                reconData.recon ||
+                reconData,
+                null,
+                2
+            );
+
+        setResearchStatus(
+            "2/2 Recon complete. Sending evidence to Gemini..."
+        );
+
+        const analysisData =
+            await api(
+                `/analyze/${programId}?asset=${encodeURIComponent(asset)}`
+            );
+
+        latestAnalysis =
+            analysisData.analysis ||
+            analysisData;
+
+        renderAnalysis(
+            latestAnalysis,
+            asset
+        );
+
+        setResearchStatus(
+            "Research run completed. Review the potential findings below."
+        );
+
+        showStatus(
+            "Research run completed.",
+            "success"
+        );
+
+    } catch (error) {
+
+        setResearchStatus(
+            "Research run failed."
+        );
+
+        showStatus(
+            "Research run failed: " +
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+// ============================================================
+// RECON ONLY
+// ============================================================
+
+async function runRecon() {
+
+    const programId =
+        document
+            .getElementById("reconProgram")
+            .value;
+
+    const asset =
+        document
+            .getElementById("reconAsset")
+            .value
+            .trim();
+
+    if (!programId) {
+
+        showStatus(
+            "Select a program.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!asset) {
+
+        showStatus(
+            "Enter an authorized asset.",
+            "error"
+        );
+
+        return;
+    }
+
+    setProgramSelections(
+        programId
+    );
+
+    try {
+
+        setResearchStatus(
+            "Running authorized reconnaissance..."
+        );
+
+        showStatus(
+            "Running authorized recon..."
+        );
+
+        const data =
+            await api(
+                `/recon/${programId}?asset=${encodeURIComponent(asset)}`
+            );
+
+        document
+            .getElementById("reconResult")
+            .textContent =
+            JSON.stringify(
+                data.recon ||
+                data,
+                null,
+                2
+            );
+
+        setResearchStatus(
+            "Recon completed."
+        );
+
+        showStatus(
+            "Recon completed.",
+            "success"
+        );
+
+    } catch (error) {
+
+        setResearchStatus(
+            "Recon failed."
+        );
+
+        showStatus(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+// ============================================================
+// GEMINI ANALYSIS
+// ============================================================
+
+async function runAnalysis() {
+
+    const programId =
+        document
+            .getElementById("reconProgram")
+            .value;
+
+    const asset =
+        document
+            .getElementById("reconAsset")
+            .value
+            .trim();
+
+    if (!programId || !asset) {
+
+        showStatus(
+            "Select a program and enter an asset.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+
+        showStatus(
+            "Sending recon evidence to Gemini..."
+        );
+
+        const data =
+            await api(
+                `/analyze/${programId}?asset=${encodeURIComponent(asset)}`
+            );
+
+        latestAnalysis =
+            data.analysis ||
+            data;
+
+        renderAnalysis(
+            latestAnalysis,
+            asset
+        );
+
+        showStatus(
+            "Gemini analysis completed.",
+            "success"
+        );
+
+    } catch (error) {
+
+        showStatus(
+            "AI analysis failed: " +
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+// ============================================================
+// RENDER AI ANALYSIS
+// ============================================================
+
+function renderAnalysis(
+    analysis,
+    asset
+) {
+
+    const container =
+        document.getElementById(
+            "analysisResult"
+        );
+
+    container.innerHTML = "";
+
+    const summary =
+        document.createElement("div");
+
+    summary.className =
+        "analysis-summary";
+
+    summary.innerHTML = `
+
+        <strong>Summary</strong>
+
+        <br><br>
+
+        ${escapeHtml(
+            analysis.summary ||
+            "No summary provided."
+        )}
+
+    `;
+
+    container.appendChild(
+        summary
+    );
+
+    const signals =
+        analysis.interesting_signals ||
+        [];
+
+    if (signals.length) {
+
+        const box =
+            document.createElement("div");
+
+        box.className =
+            "analysis-summary";
+
+        box.style.marginTop =
+            "12px";
+
+        box.innerHTML = `
+
+            <strong>
+                Interesting Signals
+            </strong>
+
+            <ul>
+
+                ${signals.map(
+                    signal =>
+                        `<li>
+                            ${escapeHtml(signal)}
+                        </li>`
+                ).join("")}
+
+            </ul>
+        `;
+
+        container.appendChild(
+            box
+        );
+    }
+
+    const findings =
+        analysis.potential_findings ||
+        [];
+
+    if (!findings.length) {
+
+        const empty =
+            document.createElement("div");
+
+        empty.className =
+            "empty";
+
+        empty.textContent =
+            "No potential findings identified.";
+
+        container.appendChild(
+            empty
+        );
+
+        return;
+    }
+
+    findings.forEach(
+        (finding, index) => {
+
+            const div =
+                document.createElement("div");
+
+            div.className =
+                "analysis-finding";
+
+            const confidence =
+                Math.round(
+                    Number(
+                        finding.confidence || 0
+                    ) * 100
+                );
+
+            div.innerHTML = `
+
+                <h4>
+
+                    ${escapeHtml(
+                        finding.title
+                    )}
+
+                    <span class="badge">
+
+                        ${escapeHtml(
+                            finding.severity ||
+                            "info"
+                        )}
+
+                    </span>
+
+                    <span class="badge">
+
+                        ${confidence}%
+                        confidence
+
+                    </span>
+
+                </h4>
+
+                <div class="reasoning">
+
+                    ${escapeHtml(
+                        finding.reasoning || ""
+                    )}
+
+                </div>
+
+                <div class="manual-check">
+
+                    <strong>
+                        Manual check:
+                    </strong>
+
+                    <br>
+
+                    ${escapeHtml(
+                        finding.recommended_manual_check ||
+                        ""
+                    )}
+
+                </div>
+
+                <button
+                    class="btn success"
+                    onclick="
+                        createCandidateFromAnalysis(${index})
+                    "
+                >
+                    Create Candidate
+                </button>
+
+                <div
+                    id="candidateStatus${index}"
+                ></div>
+
+            `;
+
+            container.appendChild(
+                div
+            );
+        }
+    );
+}
+
+
+// ============================================================
+// CREATE CANDIDATE
+// ============================================================
+
+async function createCandidateFromAnalysis(
+    index
+) {
+
+    if (!latestAnalysis) {
+
+        showStatus(
+            "Run Gemini analysis first.",
+            "error"
+        );
+
+        return;
+    }
+
+    const findings =
+        latestAnalysis.potential_findings ||
+        [];
+
+    const finding =
+        findings[index];
+
+    if (!finding) {
+
+        showStatus(
+            "Finding data unavailable.",
+            "error"
+        );
+
+        return;
+    }
+
+    const programId =
+        document
+            .getElementById("reconProgram")
+            .value;
+
+    const asset =
+        document
+            .getElementById("reconAsset")
+            .value
+            .trim();
+
+    if (!programId || !asset) {
+
+        showStatus(
+            "Program and asset are required.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+
+        showStatus(
+            "Creating candidate..."
+        );
+
+        const payload = {
+
+            asset: asset,
+
+            title:
+                finding.title,
+
+            severity:
+                finding.severity ||
+                "info",
+
+            description:
+                finding.reasoning ||
+                "",
+
+            evidence:
+                finding.recommended_manual_check ||
+                ""
+        };
+
+        const candidate =
+            await api(
+                `/candidates/${programId}`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(payload)
+                }
+            );
+
+        const status =
+            document.getElementById(
+                `candidateStatus${index}`
+            );
+
+        status.innerHTML = `
+
+            <div
+                class="badge green"
+                style="
+                    margin:12px 0 0 0;
+                "
+            >
+                Candidate created
+            </div>
+
+        `;
+
+        showStatus(
+            "Candidate created successfully.",
+            "success"
+        );
+
+        await loadCandidates();
+
+    } catch (error) {
+
+        showStatus(
+            "Could not create candidate: " +
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+// ============================================================
+// CANDIDATES
+// ============================================================
+
+async function loadCandidates() {
+
+    if (!currentProgram) {
+        return;
+    }
+
+    try {
+
+        const data =
+            await api(
+                `/programs/${currentProgram}/candidates`
+            );
+
+        const candidates =
+            Array.isArray(data)
+                ? data
+                : data.candidates || [];
+
+        document
+            .getElementById("statCandidates")
+            .textContent =
+            candidates.length;
+
+        const container =
+            document.getElementById(
+                "candidates"
+            );
+
+        container.innerHTML = "";
+
+        if (!candidates.length) {
+
+            container.innerHTML =
+                `<div class="empty">
+                    No candidates.
+                </div>`;
+
+            return;
+        }
+
+        candidates.forEach(
+            candidate => {
+
+                const div =
+                    document.createElement("div");
+
+                div.className =
+                    "item";
+
+                const status =
+                    candidate.status ||
+                    "needs_review";
+
+                let actions = "";
+
+                if (
+                    status === "needs_review"
+                ) {
+
+                    actions = `
+
+                        <button
+                            class="btn success small"
+                            onclick="
+                                reviewCandidate(
+                                    '${candidate.id}'
+                                )
+                            "
+                        >
+                            Confirm
+                        </button>
+
+                        <button
+                            class="btn danger small"
+                            onclick="
+                                rejectCandidate(
+                                    '${candidate.id}'
+                                )
+                            "
+                        >
+                            Reject
+                        </button>
+
+                    `;
+                }
+
+                div.innerHTML = `
+
+                    <div class="item-title">
+
+                        ${escapeHtml(
+                            candidate.title
+                        )}
+
+                        <span class="badge">
+
+                            ${escapeHtml(
+                                status
+                            )}
+
+                        </span>
+
+                        <span class="badge">
+
+                            ${escapeHtml(
+                                candidate.severity ||
+                                "info"
+                            )}
+
+                        </span>
+
+                    </div>
+
+                    <div class="item-meta">
+
+                        Asset:
+                        ${escapeHtml(
+                            candidate.asset
+                        )}
+
+                        <br>
+
+                        ${escapeHtml(
+                            candidate.description ||
+                            ""
+                        )}
+
+                        <br>
+
+                        ID:
+                        ${escapeHtml(
+                            candidate.id
+                        )}
+
+                    </div>
+
+                    ${actions}
+
+                `;
+
+                container.appendChild(
+                    div
+                );
+            }
+        );
+
+    } catch (error) {
+
+        showStatus(
+            "Could not load candidates: " +
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+// ============================================================
+// HUMAN REVIEW
+// ============================================================
+
+async function reviewCandidate(id) {
+
+    const note =
+        prompt(
+            "Reviewer note:",
+            "Confirmed during authorized review."
+        );
+
+    if (note === null) {
+        return;
+    }
+
+    try {
+
+        await api(
+            `/candidates/${id}/review`,
+            {
+                method: "PATCH",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    JSON.stringify({
+                        status:
+                            "confirmed",
+
+                        reviewer_note:
+                            note
+                    })
+            }
+        );
+
+        showStatus(
+            "Candidate confirmed.",
+            "success"
+        );
+
+        await loadCandidates();
+        await loadFindings();
+
+    } catch (error) {
+
+        showStatus(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+async function rejectCandidate(id) {
+
+    const note =
+        prompt(
+            "Reason for rejection:",
+            "Rejected during review."
+        );
+
+    if (note === null) {
+        return;
+    }
+
+    try {
+
+        await api(
+            `/candidates/${id}/review`,
+            {
+                method: "PATCH",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    JSON.stringify({
+                        status:
+                            "rejected",
+
+                        reviewer_note:
+                            note
+                    })
+            }
+        );
+
+        showStatus(
+            "Candidate rejected.",
+            "success"
+        );
+
+        await loadCandidates();
+
+    } catch (error) {
+
+        showStatus(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+// ============================================================
+// CONFIRMED FINDINGS
+// ============================================================
+
+async function loadFindings() {
+
+    if (!currentProgram) {
+        return;
+    }
+
+    try {
+
+        const data =
+            await api(
+                `/programs/${currentProgram}/findings`
+            );
+
+        const findings =
+            Array.isArray(data)
+                ? data
+                : data.findings || [];
+
+        document
+            .getElementById("statFindings")
+            .textContent =
+            findings.length;
+
+        const container =
+            document.getElementById(
+                "confirmedFindings"
+            );
+
+        container.innerHTML = "";
+
+        if (!findings.length) {
+
+            container.innerHTML =
+                `<div class="empty">
+                    No confirmed findings.
+                </div>`;
+
+            return;
+        }
+
+        findings.forEach(
+            finding => {
+
+                const div =
+                    document.createElement("div");
+
+                div.className =
+                    "item";
+
+                div.innerHTML = `
+
+                    <div class="item-title">
+
+                        ${escapeHtml(
+                            finding.title
+                        )}
+
+                        <span class="badge">
+
+                            ${escapeHtml(
+                                finding.severity ||
+                                "info"
+                            )}
+
+                        </span>
+
+                    </div>
+
+                    <div class="item-meta">
+
+                        Asset:
+                        ${escapeHtml(
+                            finding.asset
+                        )}
+
+                        <br>
+
+                        ${escapeHtml(
+                            finding.description ||
+                            ""
+                        )}
+
+                        <br>
+
+                        ID:
+                        ${escapeHtml(
+                            finding.id
+                        )}
+
+                    </div>
+
+                    <button
+                        class="btn small"
+                        onclick="
+                            useFindingForReport(
+                                '${finding.id}'
+                            )
+                        "
+                    >
+                        Generate Report
+                    </button>
+
+                `;
+
+                container.appendChild(
+                    div
+                );
+            }
+        );
+
+    } catch (error) {
+
+        showStatus(
+            "Could not load findings: " +
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+// ============================================================
+// REPORTS
+// ============================================================
+
+function useFindingForReport(id) {
+
+    const findingInput =
+        document.getElementById("findingId");
+
+    const reportOutput =
+        document.getElementById("reportResult");
+
+    findingInput.value = id;
+
+    // Clear the previous report so an old report
+    // cannot be mistaken for the selected finding.
+    reportOutput.textContent =
+        "Ready to generate report.";
+
+    showSection(
+        "reports",
+        document.querySelectorAll(
+            ".nav button"
+        )[4]
+    );
+
+    showStatus(
+        "Finding selected. Generate the report.",
+        "success"
+    );
+}
+
+
+async function generateReport() {
+
+    const findingId =
+        document
+            .getElementById("findingId")
+            .value
+            .trim();
+
+    if (!findingId) {
+
+        showStatus(
+            "Enter a finding ID.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+
+        showStatus(
+            "Generating report..."
+        );
+
+        document
+            .getElementById("reportResult")
+            .textContent =
+            "Generating report...";
+
+        const data =
+            await api(
+                `/reports/${findingId}`
+            );
+
+        document
+            .getElementById("reportResult")
+            .textContent =
+            JSON.stringify(
+                data.report ||
+                data,
+                null,
+                2
+            );
+
+        showStatus(
+            "Report generated.",
+            "success"
+        );
+
+    } catch (error) {
+
+        document
+            .getElementById("reportResult")
+            .textContent =
+            "Report generation failed: " +
+            error.message;
+
+        showStatus(
+            "Report generation failed: " +
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+// ============================================================
+// OPEN PROGRAM
+// ============================================================
+
+function openSelectedProgram() {
+
+    const value =
+        document
+            .getElementById(
+                "dashboardProgram"
+            )
+            .value;
+
+    if (!value) {
+
+        showStatus(
+            "Select a program first.",
+            "error"
+        );
+
+        return;
+    }
+
+    setProgramSelections(value);
+
+    showSection(
+        "programs",
+        document.querySelectorAll(
+            ".nav button"
+        )[1]
+    );
+
+    loadProgramData();
+}
+
+
+// ============================================================
+// START
+// ============================================================
+
+checkBackend();
+
+</script>
+
+</body>
+</html>
